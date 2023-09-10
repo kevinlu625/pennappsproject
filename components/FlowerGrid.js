@@ -1,9 +1,23 @@
 import { View, Text } from "react-native";
-import React, { useState } from "react";
+import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { TouchableOpacity, FlatList, StyleSheet } from "react-native";
 
-const FlowerGrid = ({ data }) => {
+const FlowerGrid = ({ data }, ref) => {
   const [gridData, setGridData] = useState(data);
+  const addNewFlower = (newFlowerData) => {
+    const newItem = {
+      id: String(gridData.length + 1),
+      ...newFlowerData,
+      isExpanded: false,
+    };
+
+    setGridData([...gridData, newItem]);
+  };
+
+  useImperativeHandle(ref, () => ({
+    addNewFlower,
+  }));
+
   const renderItem = ({ item }) => {
     const toggleExpansion = (itemId) => {
       setGridData((prevData) =>
@@ -56,7 +70,7 @@ const styles = StyleSheet.create({
     height: 250,
   },
   cardTitle: {
-    fontSize: 45,
+    fontSize: 30,
     fontWeight: "bold",
   },
   cardDescription: {
@@ -65,4 +79,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FlowerGrid;
+export default forwardRef(FlowerGrid);

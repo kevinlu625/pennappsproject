@@ -1,5 +1,5 @@
 import { View, Text, SafeAreaView } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "../constants/colors";
 import ExpandingGrid from "../components/FlowerGrid";
@@ -10,12 +10,21 @@ import {
   Modal,
   Button,
   TextInput,
+  FlatList,
+  Animated,
 } from "react-native";
 
 const home = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [answer, setAnswer] = useState(""); // State to store the user's answer
   const [answer2, setAnswer2] = useState(""); // State to store the user's answer
+  const [answer3, setAnswer3] = useState(""); // State to store the user's answer
+  const [answer4, setAnswer4] = useState(""); // State to store the user's answer
+  const [messages, setMessages] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const typingAnimation = new Animated.Value(0);
+
   const gridData = [
     {
       id: "1",
@@ -35,19 +44,6 @@ const home = () => {
       description: "Description 2",
       isExpanded: false,
     },
-    {
-      id: "4",
-      title: "Item 2",
-      description: "Description 2",
-      isExpanded: false,
-    },
-    {
-      id: "5",
-      title: "Item 2",
-      description: "Description 2",
-      isExpanded: false,
-    },
-
     // Add more items as needed
   ];
 
@@ -63,14 +59,74 @@ const home = () => {
     setAnswer2(text);
   };
 
+  const handleAnswerChange3 = (text) => {
+    setAnswer3(text);
+  };
+
+  const handleAnswerChange4 = (text) => {
+    setAnswer4(text);
+  };
+
+  const [flowerData, setFlowerData] = useState(gridData);
+  const flowerGridRef = useRef();
+
   const submitAnswer = () => {
     // You can handle the submission logic here
     console.log("This is users plant type:", answer);
     console.log("This is users planting situation:", answer2);
 
-    // Close the modal
-    toggleModal();
+    const newEntry = {
+      title: answer,
+      description: answer2,
+    };
+
+    const url =
+      "http://127.0.0.1:5000/recommend/${answer3}/${answer4}/${answer}/${answer2}";
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // Handle the JSON response data here
+        console.log(data);
+      })
+      .catch((error) => {
+        // Handle any errors that occurred during the fetch
+        console.error("Fetch error:", error);
+      });
+
+    // Add the new entry to the existing array
+    flowerGridRef.current.addNewFlower(newEntry);
+
+    if (answer.trim() === "") return;
+
+    // Start the typing animation
+    setIsTyping(true);
+
+    // Simulate a bot response (you can replace this with actual bot logic)
+    setTimeout(() => {
+      const botResponse =
+        "This is a bot response.asdfasdfasdfasdfasdfasdfasdfasdfadsfasdfasdfasdfadfasdfasdfasdfasdfasdfdasdfasdfasdfasdfadsfasdf";
+      setMessages([...messages, { text: botResponse, isUser: false }]);
+      setIsTyping(false); // Stop the typing animation
+    }, 0); // Simulated delay for the bot response
   };
+
+  useEffect(() => {
+    if (isTyping) {
+      Animated.timing(typingAnimation, {
+        toValue: 1,
+        duration: 20, // Typing speed
+        useNativeDriver: false,
+      }).start();
+    } else {
+      typingAnimation.setValue(0);
+    }
+  }, [isTyping]);
 
   return (
     <SafeAreaView>
@@ -105,6 +161,19 @@ const home = () => {
           >
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
+                <TouchableOpacity onPress={toggleModal}>
+                  <Image
+                    source={require("../assets/xicon.png")}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 5,
+                      left: 280,
+                      bottom: 15,
+                    }} // Adjust the width and height as needed
+                  />
+                </TouchableOpacity>
+
                 {/* Add your questionnaire components here */}
                 <Text>Question 1: What are you looking to plant/grow?</Text>
                 <TextInput
@@ -120,9 +189,47 @@ const home = () => {
                   value={answer2}
                   placeholder="Your answer"
                 />
+                <Text>Question 3: What city & state are you in?</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={handleAnswerChange3}
+                  value={answer3}
+                  placeholder="Your answer"
+                />
+                <Text>Question 4: What season are you in?</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={handleAnswerChange4}
+                  value={answer4}
+                  placeholder="Your answer"
+                />
                 {/* Add input fields, radio buttons, checkboxes, etc. */}
                 <Button title="Submit" onPress={submitAnswer} />
               </View>
+
+              <FlatList
+                data={messages}
+                renderItem={({ item }) => (
+                  <View
+                    style={item.isUser ? styles.userMessage : styles.botMessage}
+                  >
+                    <Text style={styles.messageText}>{item.text}</Text>
+                  </View>
+                )}
+                keyExtractor={(item, index) => index.toString()}
+              />
+              {isTyping && (
+                <View style={styles.typingContainer}>
+                  <Animated.View
+                    style={[
+                      styles.typingIndicator,
+                      {
+                        opacity: typingAnimation,
+                      },
+                    ]}
+                  />
+                </View>
+              )}
             </View>
           </Modal>
         </View>
@@ -137,7 +244,7 @@ const home = () => {
             Welcome to your personal gardening assistant
           </Text>
         </View>
-        <ExpandingGrid data={gridData} />
+        <ExpandingGrid ref={flowerGridRef} data={flowerData} />
       </View>
     </SafeAreaView>
   );
@@ -149,6 +256,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+    paddingTop: 125,
   },
   modalContent: {
     backgroundColor: "white",
@@ -162,6 +270,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
+  },
+  botMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: "#EFEFEF",
+    borderRadius: 10,
+    padding: 8,
+    marginVertical: 4,
+    marginRight: 20,
+    marginLeft: 20,
+  },
+  messageText: {
+    fontSize: 16,
+  },
+  typingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  typingIndicator: {
+    backgroundColor: "#EFEFEF",
+    height: 8,
+    width: 24,
+    borderRadius: 4,
+    marginRight: 8,
   },
 });
 
