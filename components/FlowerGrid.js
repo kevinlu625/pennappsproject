@@ -1,6 +1,6 @@
 import { View, Text } from "react-native";
 import React, { useState, forwardRef, useImperativeHandle } from "react";
-import { TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import { TouchableOpacity, FlatList, StyleSheet, Image } from "react-native";
 
 const FlowerGrid = ({ data }, ref) => {
   const [gridData, setGridData] = useState(data);
@@ -33,6 +33,10 @@ const FlowerGrid = ({ data }, ref) => {
     return (
       <TouchableOpacity onPress={toggleExpansion}>
         <View style={styles.cardContainer}>
+          <Image
+            source={require("../assets/plant1.png")}
+            style={styles.cardImage}
+          />
           <Text style={styles.cardTitle}>{item.title}</Text>
           {item.isExpanded && (
             <Text style={styles.cardDescription}>{item.description}</Text>
@@ -68,14 +72,21 @@ const styles = StyleSheet.create({
     elevation: 3, // Elevation for Android (if you want to add elevation)]
     width: 185,
     height: 250,
+    alignItems: "center",
   },
   cardTitle: {
-    fontSize: 30,
+    fontSize: 20,
     fontWeight: "bold",
   },
   cardDescription: {
     fontSize: 16,
     marginTop: 8,
+  },
+  cardImage: {
+    width: "100%",
+    height: 150, // Adjust the height as needed
+    borderRadius: 10,
+    marginBottom: 8,
   },
 });
 

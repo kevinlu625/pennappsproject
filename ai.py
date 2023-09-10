@@ -1,13 +1,29 @@
 import openai
 from metaphor_python import Metaphor
-from flask import Flask
+from flask import Flask, jsonify
+from flask_talisman import Talisman
+from flask_cors import CORS
 
 # setting up APIs
-openai.api_key = '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'
+openai.api_key = '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'
 client = Metaphor("c4a74e50-0838-403e-890d-576730c0abd2")
+
 
 # setting up flask application
 app = Flask(__name__)
+
+# Define a secret key for your Flask app (required for Flask-Talisman)
+app.config["SECRET_KEY"] = "cock_and_balls"
+
+CORS(app)
+
+# Initialize Flask-Talisman and configure it to enforce HTTPS
+talisman = Talisman(
+    app,
+    content_security_policy=None,  # Customize CSP as needed
+    force_https=True,  # Enforce HTTPS
+)
+
 @app.route("/helloworld")
 def hello_world():
     return "<p>Hello, World!</p>"
@@ -41,7 +57,7 @@ def get_recommendations(location, time_of_year, plant_type, garden_type):
 
     return responses
 
-@app.route("/reccomend/<string:location>/<string:time_of_year>/<string:plant_type>/<string:garden_type>")
+@app.route("/reccomend/<string:location>/<string:time_of_year>/<string:plant_type>/<string:garden_type>",  methods=['GET'])
 def get_recs_w_sites(location, time_of_year, plant_type, garden_type):
     recommendations = get_recommendations(location, time_of_year, plant_type, garden_type)
     out = ""
@@ -66,13 +82,15 @@ def get_recs_w_sites(location, time_of_year, plant_type, garden_type):
 
         out += f"<p>{recommendation[0]}, {recommendation[1]}, {recommendation[2]},</p>"
 
-    for r in recommendations:
-        print(r)
+    message = []
 
-    return out
+    for r in recommendations:
+        message.append({"name": r[0], "desc" : r[1], "url": r[2]})
+
+    return jsonify(message)
 
 
 if __name__ == "__main__":
     app.debug = True
-    app.run()
+    app.run(port = 3000, ssl_context=('cert.pem', 'key.pem'))
     

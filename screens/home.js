@@ -1,5 +1,5 @@
 import { View, Text, SafeAreaView } from "react-native";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Component } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "../constants/colors";
 import ExpandingGrid from "../components/FlowerGrid";
@@ -28,19 +28,20 @@ const home = () => {
   const gridData = [
     {
       id: "1",
-      title: "Item 1",
+      title: "Honeysuckle",
       description: "Description 1",
+      imageUrl: "../assets/shovel.png",
       isExpanded: false,
     },
     {
       id: "2",
-      title: "Item 2",
+      title: "Wisteria",
       description: "Description 2",
       isExpanded: false,
     },
     {
       id: "3",
-      title: "Item 2",
+      title: "Star Jasmine",
       description: "Description 2",
       isExpanded: false,
     },
@@ -67,8 +68,8 @@ const home = () => {
     setAnswer4(text);
   };
 
-  const [flowerData, setFlowerData] = useState(gridData);
-  const flowerGridRef = useRef();
+  const [response, setResponse] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const submitAnswer = () => {
     // You can handle the submission logic here
@@ -80,27 +81,24 @@ const home = () => {
       description: answer2,
     };
 
-    const url =
-      "http://127.0.0.1:5000/recommend/${answer3}/${answer4}/${answer}/${answer2}";
+    const url = `https://127.0.0.1:3000/reccomend/${encodeURIComponent(
+      answer3
+    )}/${encodeURIComponent(answer4)}/${encodeURIComponent(
+      answer
+    )}/${encodeURIComponent(answer2)}`;
+
+    console.log(url);
 
     fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((data) => {
-        // Handle the JSON response data here
-        console.log(data);
+        // Use the data from the server here
+        setData(JSON.stringify(data));
       })
       .catch((error) => {
-        // Handle any errors that occurred during the fetch
-        console.error("Fetch error:", error);
+        // Handle any errors that occur
+        console.error(error);
       });
-
-    // Add the new entry to the existing array
-    flowerGridRef.current.addNewFlower(newEntry);
 
     if (answer.trim() === "") return;
 
@@ -110,7 +108,7 @@ const home = () => {
     // Simulate a bot response (you can replace this with actual bot logic)
     setTimeout(() => {
       const botResponse =
-        "This is a bot response.asdfasdfasdfasdfasdfasdfasdfasdfadsfasdfasdfasdfadfasdfasdfasdfasdfasdfdasdfasdfasdfasdfadsfasdf";
+        "Miami has a warm and tropical climate, which allows for a wide variety of flowers to be grown throughout the year, including in the fall. Here are some flowers you can consider planting in Miami during the fall season. Hibiscus flowers thrive in Miami's tropical climate. They come in a range of colors and are known for their large, showy blooms. Bougainvillea is a popular choice for its vibrant and colorful bracts. It's drought-tolerant and can add a burst of color to your garden";
       setMessages([...messages, { text: botResponse, isUser: false }]);
       setIsTyping(false); // Stop the typing animation
     }, 0); // Simulated delay for the bot response
@@ -244,7 +242,7 @@ const home = () => {
             Welcome to your personal gardening assistant
           </Text>
         </View>
-        <ExpandingGrid ref={flowerGridRef} data={flowerData} />
+        <ExpandingGrid ref={ExpandingGrid} data={gridData} />
       </View>
     </SafeAreaView>
   );
